@@ -1,0 +1,44 @@
+name: Firsat Avcisi Gunluk Tarama
+
+on:
+  schedule:
+    # Her gün 07:00 UTC = 10:00 Türkiye Saati (UTC+3)
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  tarama:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Repoyu indir
+        uses: actions/checkout@v4
+
+      - name: Python kurulumu
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bagimliliklari yukle
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright beautifulsoup4 requests python-dotenv
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Ortam degiskenlerini (.env) olustur
+        run: |
+          cat << 'EOF' > .env
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_2=${{ secrets.GEMINI_API_KEY_2 }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          EOF
+
+      - name: Firsat Avcisini calistir
+        env:
+          CI_MODE: "true"
+        run: |
+          python main.py
